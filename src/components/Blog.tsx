@@ -145,39 +145,66 @@ const Blog: React.FC<BlogProps> = ({ language, posts, isAdmin, onAdminClick }) =
     
     // Set language and voice
     utterance.lang = language === 'es' ? 'es-ES' : 'en-US';
-    utterance.rate = language === 'es' ? 0.7 : 0.7; // Same slower rate for both
+    utterance.rate = 0.8; // Slightly faster for more natural flow
     utterance.pitch = 1;
-    utterance.volume = 0.8;
+    utterance.volume = 0.9;
     
     // Get available voices and select appropriate one
     const voices = speechSynthesis.getVoices();
     
     let preferredVoice;
     if (language === 'es') {
-      // For Spanish: prioritize natural voices, then Google, then Microsoft
+      // For Spanish: prioritize premium natural voices
       preferredVoice = voices.find(voice => 
-        voice.lang.startsWith('es') && (voice.name.includes('Monica') || voice.name.includes('Paulina') || voice.name.includes('Jorge'))
+        voice.lang.startsWith('es') && (
+          voice.name.includes('Mónica') || 
+          voice.name.includes('Paulina') || 
+          voice.name.includes('Jorge') ||
+          voice.name.includes('Diego') ||
+          voice.name.includes('Esperanza') ||
+          voice.name.includes('Marisol')
+        )
+      ) || voices.find(voice => 
+        voice.lang.startsWith('es') && voice.name.includes('Google') && voice.name.includes('es-ES')
       ) || voices.find(voice => 
         voice.lang.startsWith('es') && voice.localService === true
-      ) || voices.find(voice => 
-        voice.lang.startsWith('es') && (voice.name.includes('Google') || voice.name.includes('Chrome'))
       ) || voices.find(voice => 
         voice.lang.startsWith('es') && voice.name.includes('Microsoft')
       ) || voices.find(voice => 
         voice.lang.startsWith('es')
       );
     } else {
-      // For English: prioritize natural-sounding voices
-      // Try to find the best English voices in order of preference
+      // For English: prioritize premium natural voices
       const englishVoicePreferences = [
-        // Premium natural voices (macOS/iOS)
-        (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && (v.name.includes('Samantha') || v.name.includes('Alex')),
-        // Google voices (usually good quality)
-        (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && v.name.includes('Google') && v.name.includes('US'),
-        // Microsoft voices
-        (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && v.name.includes('Microsoft') && (v.name.includes('Zira') || v.name.includes('David')),
-        // Other premium voices
-        (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && (v.name.includes('Daniel') || v.name.includes('Karen') || v.name.includes('Moira')),
+        // Premium natural voices (macOS/iOS) - highest quality
+        (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && (
+          v.name.includes('Samantha') || 
+          v.name.includes('Alex') || 
+          v.name.includes('Victoria') ||
+          v.name.includes('Allison') ||
+          v.name.includes('Ava') ||
+          v.name.includes('Susan')
+        ),
+        // Google Neural voices (very good quality)
+        (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && v.name.includes('Google') && (
+          v.name.includes('US') || v.name.includes('Neural') || v.name.includes('Wavenet')
+        ),
+        // Microsoft Neural voices
+        (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && v.name.includes('Microsoft') && (
+          v.name.includes('Aria') || 
+          v.name.includes('Jenny') || 
+          v.name.includes('Guy') ||
+          v.name.includes('Zira') || 
+          v.name.includes('David')
+        ),
+        // Other high-quality voices
+        (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && (
+          v.name.includes('Daniel') || 
+          v.name.includes('Karen') || 
+          v.name.includes('Moira') ||
+          v.name.includes('Fiona') ||
+          v.name.includes('Tessa')
+        ),
         // Local service voices (usually better than remote)
         (v: SpeechSynthesisVoice) => v.lang.startsWith('en-US') && v.localService === true,
         // Any US English voice
@@ -194,20 +221,26 @@ const Blog: React.FC<BlogProps> = ({ language, posts, isAdmin, onAdminClick }) =
     
     if (preferredVoice) {
       utterance.voice = preferredVoice;
-      console.log(`Using voice: ${preferredVoice.name} (${preferredVoice.lang})`);
+      console.log(`🎙️ Using voice: ${preferredVoice.name} (${preferredVoice.lang}) - Local: ${preferredVoice.localService}`);
     } else {
       console.warn('No preferred voice found, using default');
     }
 
-    // Additional settings for better quality
-    if (language === 'en') {
-      // For English, use standard settings
-      utterance.rate = 0.7;
-      utterance.pitch = 1;
-    } else {
-      // Spanish settings
-      utterance.rate = 0.7;
-      utterance.pitch = 1;
+    // Fine-tune settings based on voice type
+    if (preferredVoice) {
+      if (preferredVoice.name.includes('Google') || preferredVoice.name.includes('Neural')) {
+        // Google and Neural voices work better with slightly different settings
+        utterance.rate = 0.85;
+        utterance.pitch = 0.95;
+      } else if (preferredVoice.name.includes('Microsoft')) {
+        // Microsoft voices
+        utterance.rate = 0.8;
+        utterance.pitch = 1.05;
+      } else if (preferredVoice.localService) {
+        // Local/system voices (usually highest quality)
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+      }
     }
 
     utterance.onstart = () => setPlayingPost(post.id);

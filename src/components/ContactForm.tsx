@@ -10,6 +10,12 @@ const ContactForm: React.FC<ContactFormProps> = ({ onClose, language }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
 
   const translations = {
     en: {
@@ -51,33 +57,65 @@ const ContactForm: React.FC<ContactFormProps> = ({ onClose, language }) => {
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
-    setResult("Sending....");
+    setResult('');
     
-    const formData = new FormData(event.target as HTMLFormElement);
-    formData.append("access_key", "c06946b9-d3a0-4e33-be28-c40a56f8a432");
+    const formElement = event.target as HTMLFormElement;
+    const formDataToSend = new FormData(formElement);
+    
+    // Get API key from environment variable only
+    const apiKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
+    
+    if (!apiKey) {
+      console.error('❌ VITE_WEB3FORMS_ACCESS_KEY not found in environment variables');
+      setResult(language === 'en' 
+        ? 'Configuration error. Please contact me directly at arehor@me.com' 
+        : 'Error de configuración. Por favor contáctame directamente a arehor@me.com'
+      );
+      setIsSubmitting(false);
+      return;
+    }
+    
+    console.log('🔑 Using API key from environment variables');
+    
+    // Add required fields
+    formDataToSend.append('access_key', apiKey);
+    formDataToSend.append('from_name', formData.name);
+    formDataToSend.append('reply_to', formData.email);
 
     try {
+      console.log('🚀 Sending form data...');
+      
       const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
-        body: formData
+        headers: {
+          'Accept': 'application/json'
+        },
+        body: formDataToSend
       });
 
+      console.log('📡 Response status:', response.status);
       const data = await response.json();
+      console.log('📊 Response data:', data);
 
       if (data.success) {
-        (event.target as HTMLFormElement).reset();
-        setResult("Form Submitted Successfully");
+        console.log('✅ Form submitted successfully');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setResult(t.success);
         setSubmitted(true);
       } else {
-        console.log("Error", data);
+        console.log("❌ Form submission failed:", data);
         setResult(data.message || t.error);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.log("❌ Network error:", error);
       setResult(t.error);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   if (submitted) {
@@ -124,13 +162,16 @@ const ContactForm: React.FC<ContactFormProps> = ({ onClose, language }) => {
         </div>
 
         <form onSubmit={onSubmit} className="p-6 space-y-6">
-          <input type="hidden" name="access_key" value="c06946b9-d3a0-4e33-be28-c40a56f8a432" />
+          <input type="checkbox" name="botcheck" className="hidden" style={{display: 'none'}} />
+          
+          <input type="hidden" name="from_name" value={formData.name} />
+          <input type="hidden" name="reply_to" value={formData.email} />
           
           {result && (
             <div className={`border rounded-lg p-4 ${
-              result.includes('Successfully') || result.includes('exitosamente')
+              submitted || result === t.success
                 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
-                : result.includes('Sending') || result.includes('Enviando')
+                : result === t.sending
                 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
                 : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400'
             }`}>
@@ -146,6 +187,8 @@ const ContactForm: React.FC<ContactFormProps> = ({ onClose, language }) => {
               </label>
               <input
                 type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
                 name="name"
                 required
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
@@ -160,6 +203,8 @@ const ContactForm: React.FC<ContactFormProps> = ({ onClose, language }) => {
               </label>
               <input
                 type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                 name="email"
                 required
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
@@ -174,6 +219,8 @@ const ContactForm: React.FC<ContactFormProps> = ({ onClose, language }) => {
             </label>
             <input
               type="text"
+              value={formData.subject}
+              onChange={(e) => handleInputChange('subject', e.target.value)}
               name="subject"
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
               placeholder={t.subject}
@@ -186,8 +233,10 @@ const ContactForm: React.FC<ContactFormProps> = ({ onClose, language }) => {
               {t.message} *
             </label>
             <textarea
-              name="message"
+              value={formData.message}
+              onChange={(e) => handleInputChange('message', e.target.value)}
               required
+              name="message"
               rows={6}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors resize-none"
               placeholder={language === 'en' ? 'Tell me about your project or how I can help...' : 'Cuéntame sobre tu proyecto o cómo puedo ayudarte...'}

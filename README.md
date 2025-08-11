@@ -1,4 +1,4 @@
-# Alex Rehor - Portfolio Personal
+# Alex Rehor - Portfolio Personal v10.7.2
 
 Un sitio web moderno y responsive para mostrar mi experiencia como Consultor de IA y Estratega de Datos.
 
@@ -7,11 +7,12 @@ Un sitio web moderno y responsive para mostrar mi experiencia como Consultor de 
 - **Diseño Responsive**: Funciona perfectamente en desktop, tablet y móvil
 - **Bilingüe**: Soporte completo para Español e Inglés
 - **Modo Oscuro/Claro**: Tema adaptable según preferencia del usuario
-- **Blog Interactivo**: Posts con reproducción de audio text-to-speech
+- **Blog Interactivo**: Posts con reproducción de audio text-to-speech premium
 - **Formulario de Contacto**: Funcional con Web3Forms
 - **Gestión de Contenido**: Panel de administración para editar blog y experiencia
 - **Animaciones Suaves**: Transiciones y efectos visuales modernos
 - **SEO Optimizado**: Estructura semántica y metadatos apropiados
+- **Audio Premium**: Voces naturales de alta calidad en ambos idiomas
 
 ## 🚀 Tecnologías Utilizadas
 
@@ -90,10 +91,19 @@ VITE_GOOGLE_TRANSLATE_API_KEY=tu_translate_api_key
 ```
 
 ### Configuración del Formulario de Contacto
-El formulario usa Web3Forms. Para configurarlo:
-1. Regístrate en [Web3Forms](https://web3forms.com)
-2. Obtén tu Access Key
-3. Reemplaza el valor en `src/components/ContactForm.tsx`
+El formulario usa Web3Forms y requiere configuración de API key:
+
+**Configuración Requerida:**
+1. Crea un archivo `.env` en la raíz del proyecto
+2. Copia el contenido de `.env.example` a `.env`
+3. Reemplaza `tu_api_key` con tu API key real de Web3Forms
+3. Reinicia el servidor de desarrollo
+
+**Obtener API Key:**
+1. Ve a [Web3Forms.com](https://web3forms.com)
+2. Crea una cuenta gratuita
+3. Genera tu API key
+4. Úsala en tu archivo `.env`
 
 ## 🎨 Personalización
 
